@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(
-  request: NextRequest,
-  context: { params: { id: string; commentId: string } }
-) {
-  // Try to extract params from the URL
-  const url = request.nextUrl;
-  const id = url.pathname.split("/")[4]; // /api/questions/[id]/comments/[commentId]
-  const commentId = url.pathname.split("/")[6];
+export async function DELETE(request: NextRequest) {
+  // Extract params from the URL
+  const urlParts = request.nextUrl.pathname.split("/");
+  // Example: /api/questions/[id]/comments/[commentId]/route.ts
+  // urlParts: ["", "api", "questions", "{id}", "comments", "{commentId}"]
+  const id = urlParts[3];
+  const commentId = urlParts[5];
+
+  // You can now use id and commentId as needed
   return NextResponse.json({ ok: true, id, commentId });
 } 
