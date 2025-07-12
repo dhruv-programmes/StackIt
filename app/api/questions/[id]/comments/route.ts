@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
+    // Extract params from the URL
+    const urlParts = request.nextUrl.pathname.split("/");
+    const id = urlParts[3]; // /api/questions/[id]/comments
+    
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -40,7 +41,7 @@ export async function POST(
       data: {
         content: content.trim(),
         authorId: user.id,
-        questionId: params.id,
+        questionId: id,
       },
       include: {
         author: true,
@@ -49,7 +50,7 @@ export async function POST(
 
     // Fetch the updated question with all comments
     const updatedQuestion = await prisma.question.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         author: true,
         comments: {
