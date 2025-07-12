@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, MessageSquare } from "lucide-react"
 import { Pacifico } from "next/font/google"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 const pacifico = Pacifico({
   subsets: ["latin"],
@@ -190,13 +191,14 @@ export default function HeroGeometric({
             animate="visible"
             className="flex flex-col justify-center gap-4 sm:flex-row"
           >
+            <Link href={"/ask-a-question"}>
             <Button
               size="lg"
-              className="rounded-full border-none bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-600 hover:to-teal-600 hover:shadow-cyan-500/30"
+              className="cursor-pointer rounded-full border-none bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-600 hover:to-teal-600 hover:shadow-cyan-500/30"
             >
               Ask a Question
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            </Button></Link>
             <Button
               size="lg"
               variant="outline"
