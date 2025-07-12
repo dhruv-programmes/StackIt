@@ -18,10 +18,40 @@ if (!fs.existsSync(dataFile)) {
 
 function readQuestions() {
   try {
+    // Check if file exists
+    if (!fs.existsSync(dataFile)) {
+      console.log('Questions file does not exist, creating empty file')
+      fs.writeFileSync(dataFile, JSON.stringify([]))
+      return []
+    }
+    
     const data = fs.readFileSync(dataFile, 'utf8')
-    return JSON.parse(data)
+    
+    // Check if file is empty
+    if (!data.trim()) {
+      console.log('Questions file is empty, initializing with empty array')
+      fs.writeFileSync(dataFile, JSON.stringify([]))
+      return []
+    }
+    
+    const parsed = JSON.parse(data)
+    
+    // Ensure it's an array
+    if (!Array.isArray(parsed)) {
+      console.log('Questions file is not an array, initializing with empty array')
+      fs.writeFileSync(dataFile, JSON.stringify([]))
+      return []
+    }
+    
+    return parsed
   } catch (error) {
     console.error('Error reading questions:', error)
+    // If there's any error, create a fresh file
+    try {
+      fs.writeFileSync(dataFile, JSON.stringify([]))
+    } catch (writeError) {
+      console.error('Error creating questions file:', writeError)
+    }
     return []
   }
 }
