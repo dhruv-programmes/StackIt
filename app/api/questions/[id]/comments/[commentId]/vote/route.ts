@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
+    // Extract params from the URL
+    const urlParts = request.nextUrl.pathname.split("/");
+    const id = urlParts[3];
+    const commentId = urlParts[5];
+    
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -21,7 +23,7 @@ export async function POST(
 
     // Check if comment exists
     const comment = await prisma.comment.findUnique({
-      where: { id: params.commentId },
+      where: { id: commentId },
     })
 
     if (!comment) {
@@ -32,7 +34,7 @@ export async function POST(
     const voteChange = voteType === 'UP' ? 1 : -1
     
     const updatedComment = await prisma.comment.update({
-      where: { id: params.commentId },
+      where: { id: commentId },
       data: {
         votes: {
           increment: voteChange,
