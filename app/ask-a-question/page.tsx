@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input"
 import { ArrowRight, MessageSquare, Tag, X, Eye, Edit } from "lucide-react"
 import { Pacifico } from "next/font/google"
 import { cn } from "@/lib/utils"
+import { ProtectedRoute } from "@/components/protected-route"
+import { useRouter } from "next/navigation"
+import { Toast } from "@/components/toast"
 
 const pacifico = Pacifico({
   subsets: ["latin"],
@@ -14,101 +17,221 @@ const pacifico = Pacifico({
   variable: "--font-pacifico",
 })
 
-interface TipTapEditorProps {
-  content: string
-  onChange: (content: string) => void
-}
-
-// Enhanced TipTap Editor with Live Preview
+// Enhanced TipTap Editor with Professional Toolbar
 function TipTapEditor({ content, onChange }: { content: string; onChange: (content: string) => void }) {
-
   const [isActive, setIsActive] = useState(false)
   const [localContent, setLocalContent] = useState(content || "")
   const [isPreview, setIsPreview] = useState(false)
+  const [showToolbar, setShowToolbar] = useState(false)
 
-  const handleContentChange = (e:any) => {
+  const handleContentChange = (e: any) => {
     const newContent = e.target.value
     setLocalContent(newContent)
     onChange(newContent)
   }
 
-  const formatCommands = [
-    { label: "B", command: "bold", format: "**" },
-    { label: "I", command: "italic", format: "*" },
-    { label: "</>", command: "code", format: "`" },
-    { label: "H2", command: "heading", format: "## " },
-    { label: "•", command: "list", format: "- " },
-    { label: "1.", command: "ordered", format: "1. " },
-  ]
-
-  const applyFormat = (format : string) => {
-    const textarea = document.getElementById('editor-textarea') as HTMLTextAreaElement
-    const start = textarea?.selectionStart
-    const end = textarea.selectionEnd
-    const selectedText = localContent.substring(start, end)
-    
-    if (selectedText) {
-      let formattedText = selectedText
-      switch (format) {
-        case "**":
-          formattedText = `**${selectedText}**`
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Keyboard shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault()
+          applyFormat('**')
           break
-        case "*":
-          formattedText = `*${selectedText}*`
+        case 'i':
+          e.preventDefault()
+          applyFormat('*')
           break
-        case "`":
-          formattedText = `\`${selectedText}\``
+        case 'k':
+          e.preventDefault()
+          applyFormat('`')
           break
-        case "## ":
-          formattedText = `## ${selectedText}`
+        case '1':
+          e.preventDefault()
+          applyFormat('## ')
           break
-        case "- ":
-          formattedText = `- ${selectedText}`
+        case '2':
+          e.preventDefault()
+          applyFormat('### ')
           break
-        case "1. ":
-          formattedText = `1. ${selectedText}`
+        case 'l':
+          e.preventDefault()
+          applyFormat('- ')
           break
-        default:
+        case 'o':
+          e.preventDefault()
+          applyFormat('1. ')
+          break
+        case 'q':
+          e.preventDefault()
+          applyFormat('> ')
           break
       }
-      
-      const newContent = localContent.substring(0, start) + formattedText + localContent.substring(end)
-      setLocalContent(newContent)
-      onChange(newContent)
     }
   }
 
-  const renderMarkdown = (text:any) => {
+  const formatCommands = [
+    { label: "B", command: "bold", format: "**", tooltip: "Bold", icon: "B" },
+    { label: "I", command: "italic", format: "*", tooltip: "Italic", icon: "I" },
+    { label: "C", command: "code", format: "`", tooltip: "Inline Code", icon: "</>" },
+    { label: "H2", command: "heading", format: "## ", tooltip: "Heading 2", icon: "H2" },
+    { label: "H3", command: "subheading", format: "### ", tooltip: "Heading 3", icon: "H3" },
+    { label: "•", command: "list", format: "- ", tooltip: "Unordered List", icon: "•" },
+    { label: "1.", command: "ordered", format: "1. ", tooltip: "Ordered List", icon: "1." },
+    { label: ">", command: "quote", format: "> ", tooltip: "Blockquote", icon: ">" },
+    { label: "```", command: "codeblock", format: "```\n\n```", tooltip: "Code Block", icon: "```" },
+    { label: "---", command: "hr", format: "---\n", tooltip: "Horizontal Rule", icon: "---" },
+  ]
+
+  const applyFormat = (format: string) => {
+    const textarea = document.getElementById('editor-textarea') as HTMLTextAreaElement
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = localContent.substring(start, end)
+    
+    let formattedText = selectedText
+    let newContent = localContent
+
+    switch (format) {
+      case "**":
+        formattedText = `**${selectedText}**`
+        break
+      case "*":
+        formattedText = `*${selectedText}*`
+        break
+      case "`":
+        formattedText = `\`${selectedText}\``
+        break
+      case "## ":
+        formattedText = `## ${selectedText}`
+        break
+      case "### ":
+        formattedText = `### ${selectedText}`
+        break
+      case "- ":
+        formattedText = `- ${selectedText}`
+        break
+      case "1. ":
+        formattedText = `1. ${selectedText}`
+        break
+      case "> ":
+        formattedText = `> ${selectedText}`
+        break
+      case "```\n\n```":
+        formattedText = `\`\`\`\n${selectedText}\n\`\`\``
+        break
+      case "---\n":
+        formattedText = `---\n${selectedText}`
+        break
+      default:
+        break
+    }
+    
+    newContent = localContent.substring(0, start) + formattedText + localContent.substring(end)
+    setLocalContent(newContent)
+    onChange(newContent)
+    
+    // Set cursor position after formatting
+    setTimeout(() => {
+      textarea.focus()
+      const newPosition = start + formattedText.length
+      textarea.setSelectionRange(newPosition, newPosition)
+    }, 0)
+  }
+
+  const insertAtCursor = (text: string) => {
+    const textarea = document.getElementById('editor-textarea') as HTMLTextAreaElement
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const newContent = localContent.substring(0, start) + text + localContent.substring(end)
+    
+    setLocalContent(newContent)
+    onChange(newContent)
+    
+    // Set cursor position after insertion
+    setTimeout(() => {
+      textarea.focus()
+      const newPosition = start + text.length
+      textarea.setSelectionRange(newPosition, newPosition)
+    }, 0)
+  }
+
+  const renderMarkdown = (text: any) => {
     return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code class="bg-slate-700 px-1 py-0.5 rounded text-sm">$1</code>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-slate-200 mb-2">$1</h2>')
-      .replace(/^- (.*$)/gm, '<li class="ml-4">• $1</li>')
-      .replace(/^\d+\. (.*$)/gm, '<li class="ml-4">$1</li>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em class="italic text-slate-300">$1</em>')
+      .replace(/`([^`]+)`/g, '<code class="bg-slate-700 px-2 py-1 rounded text-sm font-mono text-cyan-300 border border-slate-600">$1</code>')
+      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-white mb-3 mt-6">$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-white mb-4 mt-8 border-b border-slate-700 pb-3">$1</h2>')
+      .replace(/^> (.*$)/gm, '<blockquote class="border-l-4 border-cyan-400/50 pl-5 italic text-slate-300 my-4 bg-slate-800/30 py-3 rounded-r">$1</blockquote>')
+      .replace(/^- (.*$)/gm, '<li class="ml-6 mb-2 flex items-start"><span class="text-cyan-400 mr-3">•</span>$1</li>')
+      .replace(/^\d+\. (.*$)/gm, '<li class="ml-6 mb-2 flex items-start"><span class="text-cyan-400 mr-3">$&</span></li>')
+      .replace(/```\n([\s\S]*?)\n```/g, '<pre class="bg-slate-800 border border-slate-700 rounded-lg p-5 my-5 overflow-x-auto"><code class="text-sm text-slate-200 font-mono leading-relaxed">$1</code></pre>')
+      .replace(/^---$/gm, '<hr class="border-slate-700 my-8" />')
       .replace(/\n/g, '<br />')
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-        <div className="flex gap-1">
-          {formatCommands.map((cmd) => (
-            <button
-              key={cmd.command}
-              type="button"
-              onClick={() => applyFormat(cmd.format)}
-              className="px-2 py-1 text-xs rounded hover:bg-slate-700 text-slate-300 transition-colors"
-            >
-              {cmd.label}
-            </button>
-          ))}
+      {/* Professional Toolbar */}
+      <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+        <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-600/50">
+            {formatCommands.slice(0, 4).map((cmd) => (
+              <button
+                key={cmd.command}
+                type="button"
+                onClick={() => applyFormat(cmd.format)}
+                title={cmd.tooltip}
+                className="px-3 py-1.5 text-xs rounded-md hover:bg-slate-700 hover:text-cyan-300 text-slate-300 transition-all duration-200 font-medium"
+              >
+                {cmd.icon}
+              </button>
+            ))}
+          </div>
+          
+          <div className="w-px h-6 bg-slate-600 mx-2" />
+          
+          <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-600/50">
+            {formatCommands.slice(4, 7).map((cmd) => (
+              <button
+                key={cmd.command}
+                type="button"
+                onClick={() => applyFormat(cmd.format)}
+                title={cmd.tooltip}
+                className="px-3 py-1.5 text-xs rounded-md hover:bg-slate-700 hover:text-cyan-300 text-slate-300 transition-all duration-200 font-medium"
+              >
+                {cmd.icon}
+              </button>
+            ))}
+          </div>
+          
+          <div className="w-px h-6 bg-slate-600 mx-2" />
+          
+          <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-600/50">
+            {formatCommands.slice(7).map((cmd) => (
+              <button
+                key={cmd.command}
+                type="button"
+                onClick={() => applyFormat(cmd.format)}
+                title={cmd.tooltip}
+                className="px-3 py-1.5 text-xs rounded-md hover:bg-slate-700 hover:text-cyan-300 text-slate-300 transition-all duration-200 font-medium"
+              >
+                {cmd.icon}
+              </button>
+            ))}
+          </div>
         </div>
+        
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setIsPreview(!isPreview)}
-            className="flex items-center gap-1 px-3 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 transition-all duration-200 border border-slate-600/50 hover:border-cyan-400/50"
           >
             {isPreview ? <Edit className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             {isPreview ? "Edit" : "Preview"}
@@ -116,31 +239,70 @@ function TipTapEditor({ content, onChange }: { content: string; onChange: (conte
         </div>
       </div>
       
+      {/* Editor/Preview Area */}
       <div className="relative">
         {isPreview ? (
           <div 
-            className="min-h-[200px] p-3 text-sm leading-relaxed text-slate-200 prose prose-invert max-w-none"
+            className="min-h-[200px] p-6 text-sm leading-relaxed text-slate-200 prose prose-invert max-w-none bg-slate-800/30 rounded-lg border border-slate-700/50"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(localContent) }}
           />
         ) : (
-          <textarea
-            id="editor-textarea"
-            value={localContent}
-            onChange={handleContentChange}
-            onFocus={() => setIsActive(true)}
-            onBlur={() => setIsActive(false)}
-            placeholder="Describe your question in detail. You can use markdown formatting."
-            className={cn(
-              "w-full min-h-[200px] resize-none bg-transparent text-slate-200 placeholder:text-slate-500 focus:outline-none",
-              "text-sm leading-relaxed p-3"
-            )}
-          />
+          <div className="relative">
+            <textarea
+              id="editor-textarea"
+              value={localContent}
+              onChange={handleContentChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                setIsActive(true)
+                setShowToolbar(true)
+              }}
+              onBlur={() => {
+                setIsActive(false)
+                setTimeout(() => setShowToolbar(false), 200)
+              }}
+              placeholder="Describe your question in detail. Use the toolbar above for formatting, or type markdown directly.
+
+Examples:
+• **Bold text** for emphasis
+• `code` for inline code
+• ## Headings for structure
+• - Lists for organization
+• > Quotes for important notes"
+              className={cn(
+                "w-full min-h-[200px] resize-none bg-slate-800/30 border border-slate-600/50 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400/50",
+                "text-sm leading-relaxed p-6 rounded-lg transition-all duration-200",
+                isActive && "border-cyan-400/50 bg-slate-800/50"
+              )}
+            />
+            
+            {/* Floating character count */}
+            <div className="absolute bottom-3 right-3 text-xs text-slate-500 bg-slate-900/90 px-3 py-1.5 rounded-md border border-slate-700/50">
+              {localContent.length} chars
+            </div>
+          </div>
         )}
       </div>
       
-      <div className="flex justify-between items-center text-xs text-slate-500">
-        <span>Markdown supported</span>
-        <span>{localContent.length} characters</span>
+      {/* Help text */}
+      <div className="flex justify-between items-center text-xs text-slate-500 p-2">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+            Markdown supported
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
+            Live preview available
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-slate-600">Ctrl+B</span>
+          <span className="text-slate-600">Ctrl+I</span>
+          <span className="text-slate-600">Ctrl+K</span>
+          <span className="text-slate-600">Ctrl+1</span>
+          <span className="text-slate-600">Ctrl+L</span>
+        </div>
       </div>
     </div>
   )
@@ -241,11 +403,21 @@ function GeometricShape({
 }
 
 export default function AskQuestionForm() {
+  const router = useRouter()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [tags, setTags] = useState("")
   const [tagList, setTagList] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [toast, setToast] = useState<{
+    message: string
+    type: "success" | "error"
+    isVisible: boolean
+  }>({
+    message: "",
+    type: "success",
+    isVisible: false,
+  })
 
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 40 },
@@ -298,25 +470,57 @@ export default function AskQuestionForm() {
     
     setIsSubmitting(true)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    console.log({
-      title,
-      description,
-      tags: [...tagList, ...tags.split(",").map(tag => tag.trim())].filter(tag => tag.length > 0),
-    })
-    
-    // Reset form
-    setTitle("")
-    setDescription("")
-    setTags("")
-    setTagList([])
-    setIsSubmitting(false)
+    try {
+      const allTags = [...tagList, ...tags.split(",").map(tag => tag.trim())].filter(tag => tag.length > 0)
+      
+      const response = await fetch("/api/questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+          tags: allTags,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        console.error("API Error:", errorData)
+        throw new Error(`Failed to create question: ${response.status} ${response.statusText}`)
+      }
+
+      // Reset form
+      setTitle("")
+      setDescription("")
+      setTags("")
+      setTagList([])
+      
+      // Show success toast and redirect immediately
+      setToast({
+        message: "Question created successfully!",
+        type: "success",
+        isVisible: true,
+      })
+      
+      // Redirect to browse page immediately
+      router.push("/browse")
+    } catch (error) {
+      console.error("Error creating question:", error)
+      setToast({
+        message: "Failed to create question. Please try again.",
+        type: "error",
+        isVisible: true,
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 py-20">
+    <ProtectedRoute>
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 py-20">
       <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-cyan-500/10 to-teal-500/10 blur-3xl" />
       
       {/* Unique geometric shapes */}
@@ -481,7 +685,7 @@ export default function AskQuestionForm() {
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting || !title.trim() || !description.trim()}
-                  className="w-full h-12 rounded-xl border-none bg-gradient-to-r from-violet-500 via-cyan-500 to-teal-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 hover:from-violet-600 hover:via-cyan-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                  className="w-full h-12 rounded-xl border-none bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:from-cyan-600 hover:via-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                 >
                   {isSubmitting ? "Posting Question..." : "Post Question"}
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -494,5 +698,13 @@ export default function AskQuestionForm() {
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/50" />
     </div>
+    
+    <Toast
+      message={toast.message}
+      type={toast.type}
+      isVisible={toast.isVisible}
+      onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+    />
+    </ProtectedRoute>
   )
 }

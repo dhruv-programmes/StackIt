@@ -1,4 +1,6 @@
 import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "@/components/session-provider";
+import { Navigation } from "@/components/navigation";
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -35,7 +37,14 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <SessionProvider>
+            <div className="min-h-screen bg-slate-950">
+              <Navigation />
+              <main className="pt-16">
+                {children}
+              </main>
+            </div>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

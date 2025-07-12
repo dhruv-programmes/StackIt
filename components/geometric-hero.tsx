@@ -6,6 +6,7 @@ import { ArrowRight, MessageSquare } from "lucide-react"
 import { Pacifico } from "next/font/google"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { AuthStatus } from "@/components/auth-status"
 
 const pacifico = Pacifico({
   subsets: ["latin"],
@@ -189,24 +190,35 @@ export default function HeroGeometric({
             variants={fadeUpVariants}
             initial="hidden"
             animate="visible"
-            className="flex flex-col justify-center gap-4 sm:flex-row"
+            className="space-y-6"
           >
-            <Link href={"/ask-a-question"}>
-            <Button
-              size="lg"
-              className="cursor-pointer rounded-full border-none bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-600 hover:to-teal-600 hover:shadow-cyan-500/30"
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+              <Link href={"/ask-a-question"}>
+              <Button
+                size="lg"
+                className="cursor-pointer rounded-full border-none bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-600 hover:to-teal-600 hover:shadow-cyan-500/30"
+              >
+                Ask a Question
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button></Link>
+              <Link href={"/browse"}>
+              <Button
+                size="lg"
+                variant="outline"
+                className="cursor-pointer rounded-full border-slate-600 bg-slate-900/60 text-slate-200 shadow-sm backdrop-blur-sm hover:bg-slate-800/60 hover:text-white hover:border-cyan-400/50"
+              >
+                Browse Questions
+              </Button></Link>
+            </div>
+            
+            <motion.div
+              custom={4}
+              variants={fadeUpVariants}
+              initial="hidden"
+              animate="visible"
             >
-              Ask a Question
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button></Link>
-            <Link href={"/browse"}>
-            <Button
-              size="lg"
-              variant="outline"
-              className="cursor-pointer rounded-full border-slate-600 bg-slate-900/60 text-slate-200 shadow-sm backdrop-blur-sm hover:bg-slate-800/60 hover:text-white hover:border-cyan-400/50"
-            >
-              Browse Questions
-            </Button></Link>
+              <AuthStatus />
+            </motion.div>
           </motion.div>
         </div>
       </div>
