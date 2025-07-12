@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
+    // Extract params from the URL
+    const urlParts = request.nextUrl.pathname.split("/");
+    const id = urlParts[3]; // /api/questions/[id]
+    
     const question = await prisma.question.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         author: true,
         comments: {
@@ -59,11 +60,12 @@ export async function GET(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
   try {
+    // Extract params from the URL
+    const urlParts = request.nextUrl.pathname.split("/");
+    const id = urlParts[3]; // /api/questions/[id]
+    
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -74,7 +76,7 @@ export async function DELETE(
     }
 
     const question = await prisma.question.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { author: true },
     })
 
@@ -92,7 +94,7 @@ export async function DELETE(
 
     // Delete the question (comments will be deleted automatically due to cascade)
     await prisma.question.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Question deleted successfully" })

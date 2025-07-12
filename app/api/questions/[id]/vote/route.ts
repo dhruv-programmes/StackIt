@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
+    // Extract params from the URL
+    const urlParts = request.nextUrl.pathname.split("/");
+    const id = urlParts[3]; // /api/questions/[id]/vote
+    
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -37,7 +38,7 @@ export async function POST(
 
     // Check if question exists
     const question = await prisma.question.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!question) {
@@ -50,7 +51,7 @@ export async function POST(
     
     // Update question vote count
     await prisma.question.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         votes: {
           increment: voteChange,
@@ -60,7 +61,7 @@ export async function POST(
 
     // Get updated question with vote count
     const updatedQuestion = await prisma.question.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         author: true,
         comments: {
