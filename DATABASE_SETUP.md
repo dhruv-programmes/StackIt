@@ -104,7 +104,7 @@ DATABASE_URL="file:./dev.db"
 
 # NextAuth
 NEXTAUTH_SECRET=your-secret-here
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://stack-it-decoders.vercel.app
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id

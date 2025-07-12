@@ -8,7 +8,7 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 # NextAuth Configuration
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://stack-it-decoders.vercel.app
 NEXTAUTH_SECRET=your-nextauth-secret-key-here
 
 # Google OAuth Configuration
@@ -16,7 +16,7 @@ GOOGLE_CLIENT_ID=your-google-client-id-here
 GOOGLE_CLIENT_SECRET=your-google-client-secret-here
 
 # Database Configuration
-DATABASE_URL="postgresql://username:password@localhost:5432/stackit"
+DATABASE_URL="your-production-postgresql-url-here"
 ```
 
 ## 2. Google OAuth Setup
@@ -31,7 +31,7 @@ DATABASE_URL="postgresql://username:password@localhost:5432/stackit"
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
 3. Choose "Web application"
 4. Add authorized redirect URIs:
-   - `http://localhost:3000/api/auth/callback/google` (for development)
+   - `https://stack-it-decoders.vercel.app/api/auth/callback/google` (for production)
    - `https://yourdomain.com/api/auth/callback/google` (for production)
 5. Copy the Client ID and Client Secret
 

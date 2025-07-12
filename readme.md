@@ -35,7 +35,7 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # NextAuth
 NEXTAUTH_SECRET=your-nextauth-secret
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://stack-it-decoders.vercel.app
 ```
 
 > Use `.env.example` as a reference if provided.
@@ -60,7 +60,7 @@ npx prisma studio
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [https://stack-it-decoders.vercel.app](https://stack-it-decoders.vercel.app) in your browser.
 
 ---
 
