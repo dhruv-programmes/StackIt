@@ -1,25 +1,73 @@
 import { NextResponse } from "next/server"
-import { exec } from 'child_process'
-import { promisify } from 'util'
-
-const execAsync = promisify(exec)
+import { prisma } from "@/lib/prisma"
 
 export async function POST() {
   try {
     console.log('🔄 Setting up database...')
     
-    // Run prisma db push to create tables
-    const { stdout, stderr } = await execAsync('npx prisma db push --accept-data-loss')
+    // Test database connection
+    await prisma.$executeRaw`SELECT 1`
+    console.log('✅ Database connection successful')
     
-    console.log('✅ Database setup output:', stdout)
-    if (stderr) {
-      console.warn('⚠️ Database setup warnings:', stderr)
-    }
+    // Create tables by running schema validation
+    // This will create tables if they don't exist
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "User" (
+        "id" TEXT NOT NULL,
+        "name" TEXT,
+        "email" TEXT,
+        "emailVerified" DATETIME,
+        "image" TEXT,
+        CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+      )
+    `
+    console.log('✅ User table created/verified')
+    
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "Question" (
+        "id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "description" TEXT NOT NULL,
+        "tags" TEXT NOT NULL,
+        "authorId" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "votes" INTEGER NOT NULL DEFAULT 0,
+        CONSTRAINT "Question_pkey" PRIMARY KEY ("id")
+      )
+    `
+    console.log('✅ Question table created/verified')
+    
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "Comment" (
+        "id" TEXT NOT NULL,
+        "content" TEXT NOT NULL,
+        "authorId" TEXT NOT NULL,
+        "questionId" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "votes" INTEGER NOT NULL DEFAULT 0,
+        CONSTRAINT "Comment_pkey" PRIMARY KEY ("id")
+      )
+    `
+    console.log('✅ Comment table created/verified')
+    
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "Vote" (
+        "id" TEXT NOT NULL,
+        "userId" TEXT NOT NULL,
+        "questionId" TEXT,
+        "commentId" TEXT,
+        "voteType" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "Vote_pkey" PRIMARY KEY ("id")
+      )
+    `
+    console.log('✅ Vote table created/verified')
+    
+    console.log('✅ Database setup completed successfully')
     
     return NextResponse.json({ 
       success: true, 
-      message: 'Database setup completed successfully',
-      output: stdout
+      message: 'Database setup completed successfully'
     })
   } catch (error) {
     console.error('❌ Database setup failed:', error)
