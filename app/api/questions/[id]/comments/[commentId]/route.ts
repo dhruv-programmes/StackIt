@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma"
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
+  context: { params: { id: string; commentId: string } }
 ) {
   try {
+    const { id, commentId } = context.params;
     const session = await auth()
     
     if (!session?.user?.id) {
@@ -14,7 +15,7 @@ export async function DELETE(
     }
 
     const comment = await prisma.comment.findUnique({
-      where: { id: params.commentId },
+      where: { id: commentId },
       include: { author: true },
     })
 
@@ -32,12 +33,12 @@ export async function DELETE(
 
     // Delete the comment
     await prisma.comment.delete({
-      where: { id: params.commentId },
+      where: { id: commentId },
     })
 
     // Fetch the updated question with all comments
     const updatedQuestion = await prisma.question.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         author: true,
         comments: {
