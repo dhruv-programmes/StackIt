@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, cubicBezier } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, MessageSquare } from "lucide-react"
 import { Pacifico } from "next/font/google"
@@ -42,7 +42,7 @@ function ElegantShape({
       transition={{
         duration: 2.4,
         delay,
-        ease: [0.23, 0.86, 0.39, 0.96],
+        ease: cubicBezier(0.23, 0.86, 0.39, 0.96),
         opacity: { duration: 1.2 },
       }}
       className={cn("absolute", className)}
@@ -95,7 +95,7 @@ export default function HeroGeometric({
       transition: {
         duration: 1,
         delay: 0.5 + i * 0.2,
-        ease: [0.25, 0.4, 0.25, 1],
+        ease: cubicBezier(0.25, 0.4, 0.25, 1),
       },
     }),
   }
@@ -113,7 +113,6 @@ export default function HeroGeometric({
           gradient="from-cyan-400/60"
           className="left-[-10%] top-[15%] md:left-[-5%] md:top-[20%]"
         />
-
         <ElegantShape
           delay={0.5}
           width={500}
@@ -122,7 +121,6 @@ export default function HeroGeometric({
           gradient="from-teal-400/60"
           className="right-[-5%] top-[70%] md:right-[0%] md:top-[75%]"
         />
-
         <ElegantShape
           delay={0.4}
           width={300}
@@ -131,7 +129,6 @@ export default function HeroGeometric({
           gradient="from-sky-400/60"
           className="bottom-[5%] left-[5%] md:bottom-[10%] md:left-[10%]"
         />
-
         <ElegantShape
           delay={0.6}
           width={200}
@@ -140,7 +137,6 @@ export default function HeroGeometric({
           gradient="from-blue-400/60"
           className="right-[15%] top-[10%] md:right-[20%] md:top-[15%]"
         />
-
         <ElegantShape
           delay={0.7}
           width={150}
