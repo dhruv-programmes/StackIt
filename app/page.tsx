@@ -1,5 +1,9 @@
-export default function page() {
+import HeroGeometric from "@/components/geometric-hero";
+
+export default function Page() {
   return (
-    <div>StackIt</div>
+    <main>
+      <HeroGeometric />
+    </main>
   )
 }
