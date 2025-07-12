@@ -199,13 +199,14 @@ export default function HeroGeometric({
               Ask a Question
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button></Link>
+            <Link href={"/browse"}>
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full border-slate-600 bg-slate-900/60 text-slate-200 shadow-sm backdrop-blur-sm hover:bg-slate-800/60 hover:text-white hover:border-cyan-400/50"
+              className="cursor-pointer rounded-full border-slate-600 bg-slate-900/60 text-slate-200 shadow-sm backdrop-blur-sm hover:bg-slate-800/60 hover:text-white hover:border-cyan-400/50"
             >
               Browse Questions
-            </Button>
+            </Button></Link>
           </motion.div>
         </div>
       </div>
