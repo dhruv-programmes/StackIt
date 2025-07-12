@@ -6,22 +6,12 @@ const globalForPrisma = globalThis as unknown as {
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
 })
 
-// Add connection retry logic
+// Simplified connection handling for production
 if (process.env.NODE_ENV === 'production') {
-  prisma.$connect()
-    .then(() => {
-      console.log('✅ Prisma connected to database')
-    })
-    .catch((error) => {
-      console.error('❌ Prisma connection failed:', error)
-    })
+  // Don't pre-connect in production to avoid connection pool issues
+  console.log('📊 Prisma client initialized for production')
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma 

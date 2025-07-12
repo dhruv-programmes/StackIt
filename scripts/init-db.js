@@ -4,30 +4,15 @@ async function initDatabase() {
   const prisma = new PrismaClient();
   
   try {
-    console.log('🔄 Initializing database...');
+    console.log('🔄 Testing database connection...');
     
-    // This will create the database tables if they don't exist
+    // Simple connection test
     await prisma.$executeRaw`SELECT 1`;
     console.log('✅ Database connection successful');
     
-    // Check if tables exist by trying to query them
-    try {
-      await prisma.user.findFirst();
-      console.log('✅ User table exists');
-    } catch (error) {
-      console.log('⚠️ User table not found, will be created during db push');
-    }
-    
-    try {
-      await prisma.question.findFirst();
-      console.log('✅ Question table exists');
-    } catch (error) {
-      console.log('⚠️ Question table not found, will be created during db push');
-    }
-    
     console.log('✅ Database initialization complete');
   } catch (error) {
-    console.error('❌ Database initialization failed:', error);
+    console.error('❌ Database connection failed:', error);
     // Don't throw error, let the build continue
   } finally {
     await prisma.$disconnect();
