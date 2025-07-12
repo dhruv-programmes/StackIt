@@ -10,7 +10,35 @@ async function migrateData() {
     
     // Read existing questions from JSON file
     const questionsPath = path.join(process.cwd(), 'data', 'questions.json')
-    const questionsData = JSON.parse(fs.readFileSync(questionsPath, 'utf-8'))
+    
+    // Check if file exists
+    if (!fs.existsSync(questionsPath)) {
+      console.log('No existing data file found. Starting with empty database.')
+      return
+    }
+    
+    // Read and parse the file
+    const fileContent = fs.readFileSync(questionsPath, 'utf-8')
+    
+    // Check if file is empty
+    if (!fileContent.trim()) {
+      console.log('Data file is empty. Starting with empty database.')
+      return
+    }
+    
+    let questionsData
+    try {
+      questionsData = JSON.parse(fileContent)
+    } catch (parseError) {
+      console.log('Invalid JSON in data file. Starting with empty database.')
+      return
+    }
+    
+    // Check if questionsData is an array
+    if (!Array.isArray(questionsData)) {
+      console.log('Data file does not contain an array. Starting with empty database.')
+      return
+    }
     
     console.log(`Found ${questionsData.length} questions to migrate`)
     
