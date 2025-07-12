@@ -9,14 +9,13 @@ export async function POST() {
     await prisma.$executeRaw`SELECT 1`
     console.log('✅ Database connection successful')
     
-    // Create tables by running schema validation
-    // This will create tables if they don't exist
+    // Create tables using PostgreSQL syntax
     await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS "User" (
         "id" TEXT NOT NULL,
         "name" TEXT,
         "email" TEXT,
-        "emailVerified" DATETIME,
+        "emailVerified" TIMESTAMP,
         "image" TEXT,
         CONSTRAINT "User_pkey" PRIMARY KEY ("id")
       )
@@ -30,7 +29,7 @@ export async function POST() {
         "description" TEXT NOT NULL,
         "tags" TEXT NOT NULL,
         "authorId" TEXT NOT NULL,
-        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "votes" INTEGER NOT NULL DEFAULT 0,
         CONSTRAINT "Question_pkey" PRIMARY KEY ("id")
       )
@@ -43,7 +42,7 @@ export async function POST() {
         "content" TEXT NOT NULL,
         "authorId" TEXT NOT NULL,
         "questionId" TEXT NOT NULL,
-        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "votes" INTEGER NOT NULL DEFAULT 0,
         CONSTRAINT "Comment_pkey" PRIMARY KEY ("id")
       )
@@ -57,11 +56,45 @@ export async function POST() {
         "questionId" TEXT,
         "commentId" TEXT,
         "voteType" TEXT NOT NULL,
-        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "Vote_pkey" PRIMARY KEY ("id")
       )
     `
     console.log('✅ Vote table created/verified')
+    
+    // Add foreign key constraints
+    try {
+      await prisma.$executeRaw`
+        ALTER TABLE "Question" 
+        ADD CONSTRAINT "Question_authorId_fkey" 
+        FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE
+      `
+      console.log('✅ Question foreign key added')
+    } catch (e) {
+      console.log('⚠️ Question foreign key already exists')
+    }
+    
+    try {
+      await prisma.$executeRaw`
+        ALTER TABLE "Comment" 
+        ADD CONSTRAINT "Comment_authorId_fkey" 
+        FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE
+      `
+      console.log('✅ Comment author foreign key added')
+    } catch (e) {
+      console.log('⚠️ Comment author foreign key already exists')
+    }
+    
+    try {
+      await prisma.$executeRaw`
+        ALTER TABLE "Comment" 
+        ADD CONSTRAINT "Comment_questionId_fkey" 
+        FOREIGN KEY ("questionId") REFERENCES "Question"("id") ON DELETE CASCADE
+      `
+      console.log('✅ Comment question foreign key added')
+    } catch (e) {
+      console.log('⚠️ Comment question foreign key already exists')
+    }
     
     console.log('✅ Database setup completed successfully')
     
