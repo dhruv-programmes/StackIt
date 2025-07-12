@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         name: updatedQuestion.author.name,
         image: updatedQuestion.author.image,
       },
-      comments: updatedQuestion.comments.map(comment => ({
+      comments: updatedQuestion.comments.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         author: {
