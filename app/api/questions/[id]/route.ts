@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
+import fs from 'fs'
+import path from 'path'
+
+const dataFile = path.join(process.cwd(), 'data', 'questions.json')
+
+function readQuestions() {
+  try {
+    const data = fs.readFileSync(dataFile, 'utf8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error('Error reading questions:', error)
+    return []
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,50 +21,14 @@ export async function GET(request: NextRequest) {
     const urlParts = request.nextUrl.pathname.split("/");
     const id = urlParts[3]; // /api/questions/[id]
     
-    const question = await prisma.question.findUnique({
-      where: { id },
-      include: {
-        author: true,
-        comments: {
-          include: {
-            author: true,
-          },
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
-      },
-    })
+    const questions = readQuestions()
+    const question = questions.find((q: any) => q.id === id)
 
     if (!question) {
       return NextResponse.json({ error: "Question not found" }, { status: 404 })
     }
 
-    // Transform the response to match the expected format
-    const transformedQuestion = {
-      ...question,
-      tags: JSON.parse(question.tags),
-      author: {
-        id: question.author.id,
-        name: question.author.name,
-        image: question.author.image,
-      },
-      comments: question.comments.map((comment: any) => ({
-        id: comment.id,
-        content: comment.content,
-        author: {
-          name: comment.author.name,
-          image: comment.author.image,
-        },
-        authorId: comment.authorId,
-        createdAt: comment.createdAt.toISOString(),
-        votes: comment.votes,
-        replies: [],
-      })),
-      createdAt: question.createdAt.toISOString(),
-    }
-
-    return NextResponse.json(transformedQuestion)
+    return NextResponse.json(question)
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch question" },
@@ -75,14 +52,14 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const question = await prisma.question.findUnique({
-      where: { id },
-      include: { author: true },
-    })
+    const questions = readQuestions()
+    const questionIndex = questions.findIndex((q: any) => q.id === id)
 
-    if (!question) {
+    if (questionIndex === -1) {
       return NextResponse.json({ error: "Question not found" }, { status: 404 })
     }
+    
+    const question = questions[questionIndex]
     
     // Check if the current user is the author of the question
     if (question.authorId !== session.user.id) {
@@ -92,10 +69,12 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Delete the question (comments will be deleted automatically due to cascade)
-    await prisma.question.delete({
-      where: { id },
-    })
+    // Remove the question from the array
+    questions.splice(questionIndex, 1)
+    
+    // Write back to file
+    const fs = require('fs')
+    fs.writeFileSync(dataFile, JSON.stringify(questions, null, 2))
 
     return NextResponse.json({ message: "Question deleted successfully" })
   } catch (error) {

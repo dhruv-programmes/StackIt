@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
+import fs from 'fs'
+import path from 'path'
+
+const dataFile = path.join(process.cwd(), 'data', 'questions.json')
+
+function readQuestions() {
+  try {
+    const data = fs.readFileSync(dataFile, 'utf8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error('Error reading questions:', error)
+    return []
+  }
+}
+
+function writeQuestions(questions: any[]) {
+  try {
+    fs.writeFileSync(dataFile, JSON.stringify(questions, null, 2))
+  } catch (error) {
+    console.error('Error writing questions:', error)
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,79 +41,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Comment content is required" }, { status: 400 })
     }
 
-    // Create or find user
-    const user = await prisma.user.upsert({
-      where: { id: session.user.id },
-      update: {
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image,
-      },
-      create: {
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image,
-      },
-    })
+    const questions = readQuestions()
+    const questionIndex = questions.findIndex((q: any) => q.id === id)
 
-    // Create the comment
-    const comment = await prisma.comment.create({
-      data: {
-        content: content.trim(),
-        authorId: user.id,
-        questionId: id,
-      },
-      include: {
-        author: true,
-      },
-    })
-
-    // Fetch the updated question with all comments
-    const updatedQuestion = await prisma.question.findUnique({
-      where: { id },
-      include: {
-        author: true,
-        comments: {
-          include: {
-            author: true,
-          },
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
-      },
-    })
-
-    if (!updatedQuestion) {
+    if (questionIndex === -1) {
       return NextResponse.json({ error: "Question not found" }, { status: 404 })
     }
 
-    // Transform the response to match the expected format
-    const transformedQuestion = {
-      ...updatedQuestion,
-      tags: JSON.parse(updatedQuestion.tags),
+    const question = questions[questionIndex]
+    
+    // Create new comment
+    const newComment = {
+      id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      content: content.trim(),
+      authorId: session.user.id,
       author: {
-        id: updatedQuestion.author.id,
-        name: updatedQuestion.author.name,
-        image: updatedQuestion.author.image,
+        name: session.user.name,
+        image: session.user.image,
       },
-      comments: updatedQuestion.comments.map((comment: any) => ({
-        id: comment.id,
-        content: comment.content,
-        author: {
-          name: comment.author.name,
-          image: comment.author.image,
-        },
-        authorId: comment.authorId,
-        createdAt: comment.createdAt.toISOString(),
-        votes: comment.votes,
-        replies: [],
-      })),
-      createdAt: updatedQuestion.createdAt.toISOString(),
+      createdAt: new Date().toISOString(),
+      votes: 0,
+      replies: []
     }
 
-    return NextResponse.json(transformedQuestion)
+    // Add comment to question
+    if (!question.comments) {
+      question.comments = []
+    }
+    question.comments.push(newComment)
+    
+    // Update the question in the array
+    questions[questionIndex] = question
+    writeQuestions(questions)
+
+    return NextResponse.json(question)
   } catch (error) {
     console.error("Error creating comment:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
