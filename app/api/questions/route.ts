@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         name: newQuestion.author.name,
         image: newQuestion.author.image,
       },
-      comments: newQuestion.comments.map(comment => ({
+      comments: newQuestion.comments.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         author: {
@@ -96,7 +96,7 @@ export async function GET() {
     })
 
     // Transform the response to match the expected format
-    const transformedQuestions = questions.map(question => ({
+    const transformedQuestions = questions.map((question: any) => ({
       ...question,
       tags: JSON.parse(question.tags),
       author: {
@@ -104,7 +104,7 @@ export async function GET() {
         name: question.author.name,
         image: question.author.image,
       },
-      comments: question.comments.map(comment => ({
+      comments: question.comments.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         author: {

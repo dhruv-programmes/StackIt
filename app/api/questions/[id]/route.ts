@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         name: question.author.name,
         image: question.author.image,
       },
-      comments: question.comments.map(comment => ({
+      comments: question.comments.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         author: {
