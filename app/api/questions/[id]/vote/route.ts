@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Create or find user
     const user = await prisma.user.upsert({
-      where: { email: session.user.email },
+      where: { email: session.user.email as string },
       update: {
         id: session.user.id,
         name: session.user.name,
