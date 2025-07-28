@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, cubicBezier } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -403,6 +403,19 @@ function GeometricShape({
 }
 
 export default function AskQuestionForm() {
+  // Debug: Log when the page loads
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('[AskQuestion] Page loaded');
+    }
+  }, []);
+
+  // Debug: Log when inside ProtectedRoute children
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('[AskQuestion] Inside ProtectedRoute children');
+    }
+  }, []);
   const router = useRouter()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -519,7 +532,9 @@ export default function AskQuestionForm() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute fallback={
+      <div>Debug: ProtectedRoute fallback rendered (unauthenticated or error)</div>
+    }>
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 py-20">
       <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-cyan-500/10 to-teal-500/10 blur-3xl" />
       
