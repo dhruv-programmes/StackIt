@@ -1,57 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import fs from 'fs'
-import path from 'path'
-
-const dataFile = path.join(process.cwd(), 'data', 'questions.json')
-
-function readQuestions() {
-  try {
-    // Check if file exists
-    if (!fs.existsSync(dataFile)) {
-      console.log('Questions file does not exist, creating empty file')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    const data = fs.readFileSync(dataFile, 'utf8')
-    
-    // Check if file is empty
-    if (!data.trim()) {
-      console.log('Questions file is empty, initializing with empty array')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    const parsed = JSON.parse(data)
-    
-    // Ensure it's an array
-    if (!Array.isArray(parsed)) {
-      console.log('Questions file is not an array, initializing with empty array')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    return parsed
-  } catch (error) {
-    console.error('Error reading questions:', error)
-    // If there's any error, create a fresh file
-    try {
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-    } catch (writeError) {
-      console.error('Error creating questions file:', writeError)
-    }
-    return []
-  }
-}
-
-function writeQuestions(questions: any[]) {
-  try {
-    fs.writeFileSync(dataFile, JSON.stringify(questions, null, 2))
-  } catch (error) {
-    console.error('Error writing questions:', error)
-  }
-}
+import { prisma } from "@/lib/prisma"
 
 export async function POST(request: NextRequest) {
   try {
@@ -72,36 +21,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid vote type" }, { status: 400 })
     }
 
-    const questions = readQuestions()
-    const questionIndex = questions.findIndex((q: any) => q.id === id)
+    // Check if comment exists
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+    })
 
-    if (questionIndex === -1) {
-      return NextResponse.json({ error: "Question not found" }, { status: 404 })
-    }
-
-    const question = questions[questionIndex]
-    
-    if (!question.comments) {
+    if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 })
     }
 
-    const commentIndex = question.comments.findIndex((c: any) => c.id === commentId)
-
-    if (commentIndex === -1) {
-      return NextResponse.json({ error: "Comment not found" }, { status: 404 })
-    }
-
-    const comment = question.comments[commentIndex]
-    
-    // Update vote count
+    // Simple vote update - just increment/decrement the vote count
     const voteChange = voteType === 'UP' ? 1 : -1
-    comment.votes = (comment.votes || 0) + voteChange
     
-    // Update the question in the array
-    questions[questionIndex] = question
-    writeQuestions(questions)
+    const updatedComment = await prisma.comment.update({
+      where: { id: commentId },
+      data: {
+        votes: {
+          increment: voteChange,
+        },
+      },
+      include: {
+        author: true,
+      },
+    })
 
-    return NextResponse.json(comment)
+    return NextResponse.json({
+      id: updatedComment.id,
+      content: updatedComment.content,
+      author: {
+        name: updatedComment.author.name,
+        image: updatedComment.author.image,
+      },
+      authorId: updatedComment.authorId,
+      createdAt: updatedComment.createdAt.toISOString(),
+      votes: updatedComment.votes,
+      replies: [],
+    })
   } catch (error) {
     console.error("Error voting on comment:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

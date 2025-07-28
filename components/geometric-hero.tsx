@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { motion, cubicBezier } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, MessageSquare } from "lucide-react"
-import { Pacifico } from "next/font/google"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
-import { AuthStatus } from "@/components/auth-status"
+import { motion, cubicBezier } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, MessageSquare } from "lucide-react";
+import { Pacifico } from "next/font/google";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { AuthStatus } from "@/components/auth-status";
 
 const pacifico = Pacifico({
   subsets: ["latin"],
   weight: ["400"],
   variable: "--font-pacifico",
-})
+});
 
 function ElegantShape({
   className,
@@ -22,12 +22,12 @@ function ElegantShape({
   rotate = 0,
   gradient = "from-white/[0.08]",
 }: {
-  className?: string
-  delay?: number
-  width?: number
-  height?: number
-  rotate?: number
-  gradient?: string
+  className?: string;
+  delay?: number;
+  width?: number;
+  height?: number;
+  rotate?: number;
+  gradient?: string;
 }) {
   return (
     <motion.div
@@ -72,12 +72,12 @@ function ElegantShape({
             "border-2 border-white/20 backdrop-blur-[2px]",
             "shadow-[0_8px_32px_0_rgba(255,255,255,0.15)]",
             "after:absolute after:inset-0 after:rounded-full",
-            "after:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3),transparent_70%)]",
+            "after:bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3),transparent_70%)]"
           )}
         />
       </motion.div>
     </motion.div>
-  )
+  );
 }
 
 export default function HeroGeometric({
@@ -85,9 +85,9 @@ export default function HeroGeometric({
   title1 = "Ask Better",
   title2 = "Learn Together",
 }: {
-  badge?: string
-  title1?: string
-  title2?: string
+  badge?: string;
+  title1?: string;
+  title2?: string;
 }) {
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -100,7 +100,7 @@ export default function HeroGeometric({
         ease: cubicBezier(0.25, 0.4, 0.25, 1),
       },
     }),
-  }
+  };
 
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950">
@@ -159,18 +159,27 @@ export default function HeroGeometric({
             className="mb-8 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-slate-900/60 px-4 py-1.5 shadow-sm backdrop-blur-sm md:mb-12"
           >
             <MessageSquare className="h-5 w-5 text-cyan-400" />
-            <span className="text-sm font-medium tracking-wide text-slate-200">{badge}</span>
+            <span className="text-sm font-medium tracking-wide text-slate-200">
+              {badge}
+            </span>
           </motion.div>
 
-          <motion.div custom={1} variants={fadeUpVariants} initial="hidden" animate="visible">
+          <motion.div
+            custom={1}
+            variants={fadeUpVariants}
+            initial="hidden"
+            animate="visible"
+          >
             <h1 className="mx-4 mb-6 text-4xl font-bold tracking-tight text-white sm:text-6xl md:mb-8 md:text-8xl">
-              <span className="bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">{title1}</span>
+              <span className="bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent">
+                {title1}
+              </span>
               <br />
               <span
                 className={cn(
                   "bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 bg-clip-text p-4 text-transparent",
                   pacifico.className,
-                  "font-bold",
+                  "font-bold"
                 )}
               >
                 {title2}
@@ -178,10 +187,15 @@ export default function HeroGeometric({
             </h1>
           </motion.div>
 
-          <motion.div custom={2} variants={fadeUpVariants} initial="hidden" animate="visible">
+          <motion.div
+            custom={2}
+            variants={fadeUpVariants}
+            initial="hidden"
+            animate="visible"
+          >
             <p className="mx-auto mb-10 max-w-xl px-4 text-base leading-relaxed text-slate-400 sm:text-lg md:text-xl">
-              A minimal and focused Q&A platform designed for structured knowledge sharing within a collaborative
-              community.
+              A minimal and focused Q&A platform designed for structured
+              knowledge sharing within a collaborative community.
             </p>
           </motion.div>
 
@@ -194,36 +208,29 @@ export default function HeroGeometric({
           >
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link href={"/ask-a-question"}>
-              <Button
-                size="lg"
-                className="cursor-pointer rounded-full border-none bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-600 hover:to-teal-600 hover:shadow-cyan-500/30"
-              >
-                Ask a Question
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button></Link>
+                <Button
+                  size="lg"
+                  className="cursor-pointer rounded-full border-none bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-600 hover:to-teal-600 hover:shadow-cyan-500/30"
+                >
+                  Ask a Question
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <Link href={"/browse"}>
-              <Button
-                size="lg"
-                variant="outline"
-                className="cursor-pointer rounded-full border-slate-600 bg-slate-900/60 text-slate-200 shadow-sm backdrop-blur-sm hover:bg-slate-800/60 hover:text-white hover:border-cyan-400/50"
-              >
-                Browse Questions
-              </Button></Link>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="cursor-pointer rounded-full border-slate-600 bg-slate-900/60 text-slate-200 shadow-sm backdrop-blur-sm hover:bg-slate-800/60 hover:text-white hover:border-cyan-400/50"
+                >
+                  Browse Questions
+                </Button>
+              </Link>
             </div>
-            
-            <motion.div
-              custom={4}
-              variants={fadeUpVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <AuthStatus />
-            </motion.div>
           </motion.div>
         </div>
       </div>
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/80" />
     </div>
-  )
+  );
 }

@@ -40,7 +40,7 @@ export default function RootLayout({
           <SessionProvider>
             <div className="min-h-screen bg-slate-950">
               <Navigation />
-              <main className="pt-16">
+              <main className="pt-4">
                 {children}
               </main>
             </div>

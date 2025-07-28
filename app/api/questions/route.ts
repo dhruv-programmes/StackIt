@@ -1,68 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import fs from 'fs'
-import path from 'path'
-
-const dataFile = path.join(process.cwd(), 'data', 'questions.json')
-
-// Ensure data directory exists
-const dataDir = path.dirname(dataFile)
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true })
-}
-
-// Initialize empty data file if it doesn't exist
-if (!fs.existsSync(dataFile)) {
-  fs.writeFileSync(dataFile, JSON.stringify([]))
-}
-
-function readQuestions() {
-  try {
-    // Check if file exists
-    if (!fs.existsSync(dataFile)) {
-      console.log('Questions file does not exist, creating empty file')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    const data = fs.readFileSync(dataFile, 'utf8')
-    
-    // Check if file is empty
-    if (!data.trim()) {
-      console.log('Questions file is empty, initializing with empty array')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    const parsed = JSON.parse(data)
-    
-    // Ensure it's an array
-    if (!Array.isArray(parsed)) {
-      console.log('Questions file is not an array, initializing with empty array')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    return parsed
-  } catch (error) {
-    console.error('Error reading questions:', error)
-    // If there's any error, create a fresh file
-    try {
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-    } catch (writeError) {
-      console.error('Error creating questions file:', writeError)
-    }
-    return []
-  }
-}
-
-function writeQuestions(questions: any[]) {
-  try {
-    fs.writeFileSync(dataFile, JSON.stringify(questions, null, 2))
-  } catch (error) {
-    console.error('Error writing questions:', error)
-  }
-}
+import { prisma } from "@/lib/prisma"
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,47 +16,127 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title and description are required" }, { status: 400 })
     }
 
-    const questions = readQuestions()
-    
-    const newQuestion = {
-      id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title,
-      description,
-      tags: tags || [],
-      authorId: session.user.id,
-      author: {
+    // Create or find user
+    const user = await prisma.user.upsert({
+      where: { email: session.user.email || undefined },
+      update: {
         id: session.user.id,
         name: session.user.name,
-        email: session.user.email,
         image: session.user.image,
       },
-      createdAt: new Date().toISOString(),
-      votes: 0,
-      comments: []
+      create: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email || undefined,
+        image: session.user.image,
+      },
+    })
+
+    const newQuestion = await prisma.question.create({
+      data: {
+        title,
+        description,
+        tags: JSON.stringify(tags || []),
+        authorId: user.id,
+      },
+      include: {
+        author: true,
+        comments: {
+          include: {
+            author: true,
+          },
+        },
+      },
+    })
+
+    // Transform the response to match the expected format
+    const transformedQuestion = {
+      ...newQuestion,
+      tags: JSON.parse(newQuestion.tags),
+      author: {
+        id: newQuestion.author.id,
+        name: newQuestion.author.name,
+        image: newQuestion.author.image,
+      },
+      comments: newQuestion.comments.map((comment: any) => ({
+        id: comment.id,
+        content: comment.content,
+        author: {
+          name: comment.author.name,
+          image: comment.author.image,
+        },
+        createdAt: comment.createdAt.toISOString(),
+        votes: comment.votes,
+        replies: [],
+      })),
+      createdAt: newQuestion.createdAt.toISOString(),
     }
 
-    questions.unshift(newQuestion)
-    writeQuestions(questions)
-
-    return NextResponse.json(newQuestion)
-  } catch (error) {
+    return NextResponse.json(transformedQuestion)
+  } catch (error: any) {
     console.error("Error creating question:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    return NextResponse.json({ 
+      error: "Internal server error", 
+      details: error.message 
+    }, { status: 500 })
   }
 }
 
 export async function GET() {
   try {
-    const questions = readQuestions()
-    
-    // Sort by creation date (newest first)
-    const sortedQuestions = questions.sort((a: any, b: any) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    const questions = await prisma.question.findMany({
+      include: {
+        author: true,
+        comments: {
+          include: {
+            author: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
 
-    return NextResponse.json(sortedQuestions)
-  } catch (error) {
+    // Transform the response to match the expected format
+    const transformedQuestions = questions.map((question: any) => ({
+      ...question,
+      tags: JSON.parse(question.tags),
+      author: {
+        id: question.author.id,
+        name: question.author.name,
+        image: question.author.image,
+      },
+      comments: question.comments.map((comment: any) => ({
+        id: comment.id,
+        content: comment.content,
+        author: {
+          name: comment.author.name,
+          image: comment.author.image,
+        },
+        createdAt: comment.createdAt.toISOString(),
+        votes: comment.votes,
+        replies: [],
+      })),
+      createdAt: question.createdAt.toISOString(),
+    }))
+
+    return NextResponse.json(transformedQuestions)
+  } catch (error: any) {
     console.error("Error fetching questions:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    return NextResponse.json({ 
+      error: "Internal server error", 
+      details: error.message 
+    }, { status: 500 })
   }
 } 

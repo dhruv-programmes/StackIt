@@ -8,6 +8,7 @@ import { Pacifico } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { marked } from "marked";
 
 const pacifico = Pacifico({
   subsets: ["latin"],
@@ -163,14 +164,8 @@ function QuestionCard({ question, index }: { question: Question, index: number }
 
 
   const renderMarkdown = (text: string) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-cyan-400">$1</strong>')
-      .replace(/```(\w+)?\n(.*?)```/g, '<pre class="bg-slate-800 p-3 rounded-lg my-2 text-sm overflow-x-auto"><code>$2</code></pre>')
-      .replace(/`([^`]+)`/g, '<code class="bg-slate-800 px-2 py-1 rounded text-sm">$1</code>')
-      .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-cyan-400/50 pl-4 italic text-slate-300">$1</blockquote>')
-      .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
-      .replace(/(<li.*<\/li>)/g, '<ul class="list-disc space-y-1">$1</ul>')
-  }
+    return marked.parse(text || "");
+  };
 
   return (
     <motion.div
@@ -239,7 +234,7 @@ function QuestionCard({ question, index }: { question: Question, index: number }
           </Link>
           
           <div 
-            className="mt-3 text-slate-300 text-sm leading-relaxed"
+            className="mt-3 text-slate-300 text-sm leading-relaxed break-words overflow-auto line-clamp-5"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(question.description) }}
           />
 

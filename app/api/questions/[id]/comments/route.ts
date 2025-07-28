@@ -1,57 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import fs from 'fs'
-import path from 'path'
-
-const dataFile = path.join(process.cwd(), 'data', 'questions.json')
-
-function readQuestions() {
-  try {
-    // Check if file exists
-    if (!fs.existsSync(dataFile)) {
-      console.log('Questions file does not exist, creating empty file')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    const data = fs.readFileSync(dataFile, 'utf8')
-    
-    // Check if file is empty
-    if (!data.trim()) {
-      console.log('Questions file is empty, initializing with empty array')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    const parsed = JSON.parse(data)
-    
-    // Ensure it's an array
-    if (!Array.isArray(parsed)) {
-      console.log('Questions file is not an array, initializing with empty array')
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-      return []
-    }
-    
-    return parsed
-  } catch (error) {
-    console.error('Error reading questions:', error)
-    // If there's any error, create a fresh file
-    try {
-      fs.writeFileSync(dataFile, JSON.stringify([]))
-    } catch (writeError) {
-      console.error('Error creating questions file:', writeError)
-    }
-    return []
-  }
-}
-
-function writeQuestions(questions: any[]) {
-  try {
-    fs.writeFileSync(dataFile, JSON.stringify(questions, null, 2))
-  } catch (error) {
-    console.error('Error writing questions:', error)
-  }
-}
+import { prisma } from "@/lib/prisma"
+import { marked } from "marked";
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,40 +21,79 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Comment content is required" }, { status: 400 })
     }
 
-    const questions = readQuestions()
-    const questionIndex = questions.findIndex((q: any) => q.id === id)
-
-    if (questionIndex === -1) {
-      return NextResponse.json({ error: "Question not found" }, { status: 404 })
-    }
-
-    const question = questions[questionIndex]
-    
-    // Create new comment
-    const newComment = {
-      id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      content: content.trim(),
-      authorId: session.user.id,
-      author: {
+    // Create or find user
+    const user = await prisma.user.upsert({
+      where: { email: session.user.email || undefined },
+      update: {
+        id: session.user.id,
         name: session.user.name,
         image: session.user.image,
       },
-      createdAt: new Date().toISOString(),
-      votes: 0,
-      replies: []
+      create: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email || undefined,
+        image: session.user.image,
+      },
+    })
+
+    // Create the comment
+    const comment = await prisma.comment.create({
+      data: {
+        content: content.trim(),
+        authorId: user.id,
+        questionId: id,
+      },
+      include: {
+        author: true,
+      },
+    })
+
+    // Fetch the updated question with all comments
+    const updatedQuestion = await prisma.question.findUnique({
+      where: { id },
+      include: {
+        author: true,
+        comments: {
+          include: {
+            author: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+    })
+
+    if (!updatedQuestion) {
+      return NextResponse.json({ error: "Question not found" }, { status: 404 })
     }
 
-    // Add comment to question
-    if (!question.comments) {
-      question.comments = []
+    // Transform the response to match the expected format
+    const transformedQuestion = {
+      ...updatedQuestion,
+      tags: JSON.parse(updatedQuestion.tags),
+      author: {
+        id: updatedQuestion.author.id,
+        name: updatedQuestion.author.name,
+        image: updatedQuestion.author.image,
+      },
+      comments: updatedQuestion.comments.map((comment: any) => ({
+        id: comment.id,
+        content: comment.content,
+        author: {
+          name: comment.author.name,
+          image: comment.author.image,
+        },
+        authorId: comment.authorId,
+        createdAt: comment.createdAt.toISOString(),
+        votes: comment.votes,
+        replies: [],
+      })),
+      createdAt: updatedQuestion.createdAt.toISOString(),
     }
-    question.comments.push(newComment)
-    
-    // Update the question in the array
-    questions[questionIndex] = question
-    writeQuestions(questions)
 
-    return NextResponse.json(question)
+    return NextResponse.json(transformedQuestion)
   } catch (error) {
     console.error("Error creating comment:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
