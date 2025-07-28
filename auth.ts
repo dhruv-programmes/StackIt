@@ -1,7 +1,8 @@
-import NextAuth from "next-auth"
-import Google from "next-auth/providers/google"
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET, // ✅ Required for prod
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -17,15 +18,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async session({ session, token }) {
       if (token.sub && session.user) {
-        session.user.id = token.sub
+        session.user.id = token.sub; // ✅ persist id
       }
-      return session
+      return session;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id
+        token.sub = user.id; // ✅ set id
       }
-      return token
+      return token;
     },
   },
-})
+});

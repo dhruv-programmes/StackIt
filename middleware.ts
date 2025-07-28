@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Protect only this route
+  // Only protect this page
   if (pathname === "/ask-a-question") {
     try {
       const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
