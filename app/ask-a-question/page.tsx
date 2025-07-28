@@ -519,9 +519,9 @@ export default function AskQuestionForm() {
   }
 
   return (
-    <ProtectedRoute>
+    <>
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 py-20">
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-cyan-500/10 to-teal-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-cyan-500/10 to-teal-500/10 blur-3xl" />
       
       {/* Unique geometric shapes */}
       <div className="absolute inset-0 overflow-hidden">
@@ -705,6 +705,6 @@ export default function AskQuestionForm() {
       isVisible={toast.isVisible}
       onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
     />
-    </ProtectedRoute>
+    </>
   )
 }
