@@ -93,7 +93,7 @@ export default function QuestionDetail({ params }: { params: Promise<{ id: strin
   }
 
   const handleDeleteQuestion = async () => {
-    if (!question || !(session?.user && (session.user as any).id)) return
+    if (!question || !session?.user?.id) return
     if (!confirm("Are you sure you want to delete this question?")) return
 
     setDeleting(true)
@@ -153,8 +153,7 @@ export default function QuestionDetail({ params }: { params: Promise<{ id: strin
     )
   }
 
-  const userId = (session?.user as any)?.id;
-  const isAuthor = userId === question.author.id
+  const isAuthor = session?.user?.id === question.author.id
 
   return (
     <div className="min-h-screen bg-slate-950">

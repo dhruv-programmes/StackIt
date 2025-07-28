@@ -9,12 +9,12 @@ export async function middleware(req: NextRequest) {
   if (pathname === "/ask-a-question") {
     try {
       const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
       if (!token) {
-        console.log("[middleware] No token found, redirecting to /auth/signin");
         return NextResponse.redirect(new URL("/auth/signin", req.url));
       }
     } catch (err) {
-      console.error("[middleware] Token error:", err);
+      console.error("Token error in middleware:", err);
       return NextResponse.redirect(new URL("/auth/signin", req.url));
     }
   }

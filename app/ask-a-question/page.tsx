@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useRouter } from "next/navigation"
 import { Toast } from "@/components/toast"
-import React from "react";
 
 const pacifico = Pacifico({
   subsets: ["latin"],
@@ -403,28 +402,6 @@ function GeometricShape({
   )
 }
 
-// Add ErrorBoundary component
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: any }> {
-  constructor(props: any) {
-    super(props);
-    this.state = { error: null };
-  }
-  static getDerivedStateFromError(error: any) {
-    return { error };
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <div style={{ color: "red", padding: 32 }}>
-          <h2>Something went wrong:</h2>
-          <pre>{this.state.error?.toString()}</pre>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 export default function AskQuestionForm() {
   const router = useRouter()
   const [title, setTitle] = useState("")
@@ -542,10 +519,9 @@ export default function AskQuestionForm() {
   }
 
   return (
-    <ErrorBoundary>
-      <>
-        <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 py-20">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-cyan-500/10 to-teal-500/10 blur-3xl" />
+    <ProtectedRoute>
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 py-20">
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-cyan-500/10 to-teal-500/10 blur-3xl" />
       
       {/* Unique geometric shapes */}
       <div className="absolute inset-0 overflow-hidden">
@@ -729,7 +705,6 @@ export default function AskQuestionForm() {
       isVisible={toast.isVisible}
       onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
     />
-    </>
-    </ErrorBoundary>
+    </ProtectedRoute>
   )
 }
