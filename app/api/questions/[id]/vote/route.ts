@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     const urlParts = request.nextUrl.pathname.split("/");
     const id = urlParts[3]; // /api/questions/[id]/vote
     
-    const session = await auth()
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
@@ -103,8 +104,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(transformedQuestion)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error voting on question:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error", details: error.message }, { status: 500 });
   }
 } 

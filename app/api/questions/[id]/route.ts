@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
     // Get current user (if authenticated)
     let userId: string | null = null;
     try {
-      const session = await auth();
+      const session = await getServerSession(authOptions);
       userId = session?.user?.id || null;
     } catch {}
 
@@ -88,7 +89,7 @@ export async function DELETE(request: NextRequest) {
     const urlParts = request.nextUrl.pathname.split("/");
     const id = urlParts[3]; // /api/questions/[id]
     
-    const session = await auth()
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
       return NextResponse.json(
